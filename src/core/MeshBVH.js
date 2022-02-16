@@ -753,12 +753,10 @@ export class MeshBVH {
 		let closestDistanceTriIndex = null;
 		let closestDistanceOtherTriIndex = null;
 		tempMatrix.copy( geometryToBvh ).invert();
-		obb2.matrix.copy( tempMatrix );
 		this.shapecast(
 			{
 
 				boundsTraverseOrder: box => {
-
 					return obb.distanceToBox( box );
 
 				},
@@ -785,7 +783,7 @@ export class MeshBVH {
 
 				},
 
-				intersectsRange: ( offset, count ) => {
+				intersectsRange: ( offset, count, contained_, depth_, nodeIndex_, bvhBox ) => {
 
 					if ( otherGeometry.boundsTree ) {
 
@@ -794,7 +792,8 @@ export class MeshBVH {
 						return otherGeometry.boundsTree.shapecast( {
 							boundsTraverseOrder: box => {
 
-								return obb2.distanceToBox( box );
+								obb2.set(box.min, box.max, geometryToBvh);
+								return obb2.distanceToBox( bvhBox );
 
 							},
 
