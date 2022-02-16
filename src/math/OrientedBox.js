@@ -274,6 +274,15 @@ OrientedBox.prototype.distanceToBox = ( function () {
 
 				box.getCenter( point2 );
 				this.closestPointToPoint( point2, point1 );
+
+				// box could be regular Box3
+				// TODO: needs testing
+				if ( ! box.isOrientedBox ) {
+
+					box = new OrientedBox( box.min, box.max );
+
+				}
+
 				box.closestPointToPoint( point1, point2 );
 
 				if ( target1 ) target1.copy( point1 );

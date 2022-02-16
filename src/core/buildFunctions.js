@@ -709,6 +709,11 @@ export function buildTree( geo, options ) {
 	// we'll need it for the root bounds in the case with no groups and it should be fast here.
 	// We can't use the geometrying bounding box if it's available because it may be out of date.
 	const fullBounds = new Float32Array( 6 );
+	// Below lines used to fix a bug, but I can't replicate now. Still leaving here in case bug show up again.
+	// const fullBounds = Float32Array.from( [
+	// 	+ Infinity, + Infinity, + Infinity,
+	// 	- Infinity, - Infinity, - Infinity
+	// ] );
 	const cacheCentroidBoundingData = new Float32Array( 6 );
 	const triangleBounds = computeTriangleBounds( geo, fullBounds );
 	const indexArray = geo.index.array;

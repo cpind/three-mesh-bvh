@@ -8,3 +8,6 @@ export * from './gpu/MeshBVHUniformStruct.js';
 export * from './gpu/shaderFunctions.js';
 export * from './gpu/VertexAttributeTexture.js';
 export { SeparatingAxisTriangle } from './math/SeparatingAxisTriangle.js';
+
+// TODO: remove
+export { closestPointsSegmentToSegment } from './math/MathUtilities.js';
