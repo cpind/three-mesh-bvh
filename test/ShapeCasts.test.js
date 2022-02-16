@@ -767,21 +767,25 @@ function runSuiteWithOptions( defaultOptions ) {
 
 		} );
 
-		function distanceBetweenSphereTestCase(n, boundsTreeYesNo = false) {
+		function distanceBetweenSphereTestCase( n, boundsTreeYesNo = false ) {
+
 			it( `should return distance between sphere, n: ${n}, boundsTree: ${boundsTreeYesNo ? 'yes' : 'no'}`, () => {
 
 				const geom = new SphereBufferGeometry( 1, n * 2, n );
 				const otherGeom = new SphereBufferGeometry( 1, n * 2, n );
 				geom.boundsTree = new MeshBVH( geom );
-				if (boundsTreeYesNo) {
-					otherGeom.boundsTree = new MeshBVH(otherGeom);
+				if ( boundsTreeYesNo ) {
+
+					otherGeom.boundsTree = new MeshBVH( otherGeom );
+
 				}
+
 				const matrix = new Matrix4()
-							.compose(
-								new Vector3( 3, 0, 0 ),
-								new Quaternion(),
-								new Vector3( 1, 1, 1 )
-							);
+					.compose(
+						new Vector3( 3, 0, 0 ),
+						new Quaternion(),
+						new Vector3( 1, 1, 1 )
+					);
 
 				const bvh1 = geom.boundsTree;
 
@@ -792,50 +796,53 @@ function runSuiteWithOptions( defaultOptions ) {
 				const point2 = target2.point.applyMatrix4( matrix );
 				const dist = point1.distanceTo( point2 );
 				expect( dist ).toBeCloseTo( 1, 1 );
-				expect( target1.distance ).toBeCloseTo(1);
+				expect( target1.distance ).toBeCloseTo( 1 );
+
 			} );
+
 		}
 
-		distanceBetweenSphereTestCase(4, false);
-		distanceBetweenSphereTestCase(8, false);
-		distanceBetweenSphereTestCase(16, false);
+		distanceBetweenSphereTestCase( 4, false );
+		distanceBetweenSphereTestCase( 8, false );
+		distanceBetweenSphereTestCase( 16, false );
 
-		distanceBetweenSphereTestCase(4, true);
-		distanceBetweenSphereTestCase(8, true);
-		distanceBetweenSphereTestCase(16, true);
+		distanceBetweenSphereTestCase( 4, true );
+		distanceBetweenSphereTestCase( 8, true );
+		distanceBetweenSphereTestCase( 16, true );
 
-		it('should handle scaling correctly with boundsTree', () => {
+		it( 'should handle scaling correctly with boundsTree', () => {
 
-			const geom = new PlaneGeometry(100, 100, 1, 256);
-			const otherGeom = fromIndices([0, 0, 0,
+			const geom = new PlaneGeometry( 100, 100, 1, 256 );
+			const otherGeom = fromIndices( [ 0, 0, 0,
 																		 1, 0, 0,
-																		 0, 1, 0]);
+																		 0, 1, 0 ] );
 			let pos = new Vector3();
-			let scale = new Vector3(1, 1, 1);
-			const matrix = () => new Matrix4().compose(pos, new Quaternion(), scale);
+			let scale = new Vector3( 1, 1, 1 );
+			const matrix = () => new Matrix4().compose( pos, new Quaternion(), scale );
 
 			otherGeom.boundsTree = new MeshBVH( otherGeom );
 			geom.boundsTree = new MeshBVH( geom );
 
-			pos = new Vector3( -151, -50, 0 );
-			scale = new Vector3( 100, 100, 100);
-			runTest(geom, otherGeom);
+			pos = new Vector3( - 151, - 50, 0 );
+			scale = new Vector3( 100, 100, 100 );
+			runTest( geom, otherGeom );
 
-			pos = new Vector3( 2.5, 0.5, 0);
-			scale = new Vector3(0.01, 0.01, 1);
-			runTest(otherGeom, geom);
+			pos = new Vector3( 2.5, 0.5, 0 );
+			scale = new Vector3( 0.01, 0.01, 1 );
+			runTest( otherGeom, geom );
 
 			// test other side of plane
-			pos = new Vector3( -151, -50, 0 );
-			scale = new Vector3( 100, -100, 0.01);
-			runTest(geom, otherGeom);
+			pos = new Vector3( - 151, - 50, 0 );
+			scale = new Vector3( 100, - 100, 0.01 );
+			runTest( geom, otherGeom );
 
 			// test
-			pos = new Vector3( 2.5, 0.5, 0);
-			scale = new Vector3(0.01, -0.01, 1);;
-			runTest(otherGeom, geom);
+			pos = new Vector3( 2.5, 0.5, 0 );
+			scale = new Vector3( 0.01, - 0.01, 1 );
+			runTest( otherGeom, geom );
 
-			function runTest(geom1, geom2) {
+			function runTest( geom1, geom2 ) {
+
 				let target1, target2, point1, point2;
 				target1 = {};
 				target2 = {};
@@ -844,16 +851,19 @@ function runSuiteWithOptions( defaultOptions ) {
 				point2 = target2.point.applyMatrix4( matrix() );
 				expect( target1.distance ).toBeCloseTo( 1 );
 				expect( point1.distanceTo( point2 ) ).toBeCloseTo( 1 );
+
 			}
 
-			function fromIndices(indices) {
-				const geom = new BufferGeometry().setAttribute('position', new Float32BufferAttribute(indices, 3));
+			function fromIndices( indices ) {
+
+				const geom = new BufferGeometry().setAttribute( 'position', new Float32BufferAttribute( indices, 3 ) );
 				geom.toNonIndexed();
-				geom.setIndex([0, 1, 2]);
+				geom.setIndex( [ 0, 1, 2 ] );
 				return geom;
+
 			}
 
-		});
+		} );
 
 	} );
 
