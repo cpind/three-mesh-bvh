@@ -1,5 +1,5 @@
-import { Vector3, Quaternion, Euler, Triangle, Sphere, Plane } from 'three';
-import { sphereIntersectTriangle } from '../src/math/MathUtilities.js';
+import { Vector3, Quaternion, Euler, Triangle, Sphere, Plane, Line3 } from 'three';
+import { closestPointsSegmentToSegment, sphereIntersectTriangle } from '../src/math/MathUtilities.js';
 import { SeparatingAxisTriangle } from '../src/math/SeparatingAxisTriangle.js';
 import { OrientedBox } from '../src/math/OrientedBox.js';
 
@@ -493,6 +493,21 @@ describe( 'Box Intersections', () => {
 			expect( box.intersectsTriangle( triangle ) ).toBe( false );
 
 		}
+
+	} );
+
+} );
+
+describe( 'closestPointsSegmentToSegment', function () {
+
+	let point1 = new Vector3();
+	let point2 = new Vector3();
+	it( 'should support edge case', function () {
+
+		const line1 = new Line3( new Vector3( - 1, 0, 0 ), new Vector3( 1, 0, 0 ) );
+		const line2 = new Line3( new Vector3( 1, 0, - 1 ), new Vector3( 0, 0, 1 ) );
+		closestPointsSegmentToSegment( line1, line2, point1, point2 );
+		expect( point1.distanceToSquared( point2 ) ).toEqual( 0 );
 
 	} );
 
