@@ -139,7 +139,7 @@ SeparatingAxisTriangle.prototype.intersectsTriangle = ( function () {
 
 	// TODO: If the triangles are coplanar and intersecting the target is nonsensical. It should at least
 	// be a line contained by both triangles if not a different special case somehow represented in the return result.
-	return function intersectsTriangle( other, target = null ) {
+	return function intersectsTriangle( other, target = null, info = {} ) {
 
 		if ( this.needsUpdate ) {
 
@@ -211,7 +211,9 @@ SeparatingAxisTriangle.prototype.intersectsTriangle = ( function () {
 			if ( Math.abs( plane1.normal.dot( plane2.normal ) ) > 1.0 - 1e-10 ) {
 
 				// TODO find two points that intersect on the edges and make that the result
-				console.warn( 'SeparatingAxisTriangle.intersectsTriangle: Triangles are coplanar which does not support an output edge. Setting edge to 0, 0, 0.' );
+				// console.warn( 'SeparatingAxisTriangle.intersectsTriangle: Triangles are coplanar which does not support an output edge. Setting edge to 0, 0, 0.' );
+				info.isValid = false;
+				info.description = 'SeparatingAxisTriangle.intersectsTriangle: Triangles are coplanar which does not support an output edge. Setting edge to 0, 0, 0.';
 				target.start.set( 0, 0, 0 );
 				target.end.set( 0, 0, 0 );
 
@@ -227,6 +229,13 @@ SeparatingAxisTriangle.prototype.intersectsTriangle = ( function () {
 
 					edge.start.copy( p1 );
 					edge.end.copy( p2 );
+
+					// skip if edge coplanar with point
+					if ( plane2.normal.dot( edge.delta( new Vector3() ) ) === 0 ) {
+
+						continue;
+
+					}
 
 					if ( plane2.intersectLine( edge, found1 ? edge1.start : edge1.end ) ) {
 
@@ -253,6 +262,13 @@ SeparatingAxisTriangle.prototype.intersectsTriangle = ( function () {
 					edge.start.copy( p1 );
 					edge.end.copy( p2 );
 
+					// skip if edge coplanar with point
+					if ( plane1.normal.dot( edge.delta( new Vector3() ) ) === 0 ) {
+
+						continue;
+
+					}
+
 					if ( plane1.intersectLine( edge, found2 ? edge2.start : edge2.end ) ) {
 
 						if ( found2 ) {
@@ -271,34 +287,47 @@ SeparatingAxisTriangle.prototype.intersectsTriangle = ( function () {
 				edge1.delta( dir1 );
 				edge2.delta( dir2 );
 
-
-				if ( dir1.dot( dir2 ) < 0 ) {
-
-					let tmp = edge2.start;
-					edge2.start = edge2.end;
-					edge2.end = tmp;
-
-				}
-
-				tempDir.subVectors( edge1.start, edge2.start );
-				if ( tempDir.dot( dir1 ) > 0 ) {
+				if ( dir1.equals( new Vector3() ) ) {
 
 					target.start.copy( edge1.start );
+					target.end.copy( edge1.start );
 
-				} else {
+				} else if ( dir2.equals( new Vector3() ) ) {
 
 					target.start.copy( edge2.start );
-
-				}
-
-				tempDir.subVectors( edge1.end, edge2.end );
-				if ( tempDir.dot( dir1 ) < 0 ) {
-
-					target.end.copy( edge1.end );
+					target.end.copy( edge2.start );
 
 				} else {
 
-					target.end.copy( edge2.end );
+					if ( dir1.dot( dir2 ) < 0 ) {
+
+						let tmp = edge2.start;
+						edge2.start = edge2.end;
+						edge2.end = tmp;
+
+					}
+
+					tempDir.subVectors( edge1.start, edge2.start );
+					if ( tempDir.dot( dir1 ) > 0 ) {
+
+						target.start.copy( edge1.start );
+
+					} else {
+
+						target.start.copy( edge2.start );
+
+					}
+
+					tempDir.subVectors( edge1.end, edge2.end );
+					if ( tempDir.dot( dir1 ) < 0 ) {
+
+						target.end.copy( edge1.end );
+
+					} else {
+
+						target.end.copy( edge2.end );
+
+					}
 
 				}
 
@@ -417,4 +446,3 @@ SeparatingAxisTriangle.prototype.distanceToTriangle = ( function () {
 	};
 
 } )();
-

@@ -172,6 +172,61 @@ describe( 'Triangle Intersections', () => {
 
 	} );
 
+	it( 'should handle edge case correctly', () => {
+
+		t1.a.set( 0, 1, 1 );
+		t1.b.set( - 1, 1, 1 );
+		t1.c.set( 0, 0, 1 );
+		t1.needsUpdate = true;
+
+		t2.a.set( - 0.1, 0, 0 );
+		t2.b.set( - 0.1, 0, 1 );
+		t2.c.set( - 0.1, 1, 1 );
+		t2.needsUpdate = true;
+
+		let target = new Line3();
+		let info = {};
+		expect( t1.intersectsTriangle( t2, target, info ) ).toBe( true );
+		expect( info.isValid ).toBe( undefined );
+
+		expect( target.start.x ).toBeCloseTo( - 0.1, 3 );
+		expect( target.start.y ).toBeCloseTo( 0.1, 3 );
+		expect( target.start.z ).toBeCloseTo( 1, 3 );
+
+		expect( target.end.x ).toBeCloseTo( - 0.1, 3 );
+		expect( target.end.y ).toBeCloseTo( 1, 3 );
+		expect( target.end.z ).toBeCloseTo( 1, 3 );
+
+	} );
+
+	it( 'should handle other edge case correctly', () => {
+
+		t1.a.set( 1, - 1, 1 );
+		t1.b.set( 1, - 1, 0 );
+		t1.c.set( 1, 0, 0 );
+		t1.needsUpdate = true;
+
+
+		t2.a.set( 1, 0, - 0.1 );
+		t2.b.set( 1, 0, 0.9 );
+		t2.c.set( 0, 0, 0.9 );
+		t2.needsUpdate = true;
+
+		let target = new Line3();
+		let info = {};
+		expect( t1.intersectsTriangle( t2, target, info ) ).toBe( true );
+
+		expect( info.isValid ).toBe( undefined );
+
+		expect( target.start.x ).toBeCloseTo( 1, 3 );
+		expect( target.start.y ).toBeCloseTo( 0, 3 );
+		expect( target.start.z ).toBeCloseTo( 0, 3 );
+
+		expect( target.end.x ).toBeCloseTo( 1, 3 );
+		expect( target.end.y ).toBeCloseTo( 0, 3 );
+		expect( target.end.z ).toBeCloseTo( 0, 3 );
+
+	} );
 
 } );
 
@@ -493,6 +548,46 @@ describe( 'Box Intersections', () => {
 			expect( box.intersectsTriangle( triangle ) ).toBe( false );
 
 		}
+
+	} );
+
+} );
+
+describe( 'Distance Between Triangles', function () {
+
+	const t1 = new SeparatingAxisTriangle();
+	const t2 = new Triangle();
+
+	it( 'should handle edge case', function () {
+
+		t1.a.set( - 1, 0, 0 );
+		t1.b.set( 1, 0, 0 );
+		t1.c.set( 0, - 1, 0 );
+		t1.needsUpdate = true;
+
+		t2.a.set( - 1, 0, - 1 );
+		t2.b.set( 1, 0, - 1 );
+		t2.c.set( 0, 0, 1 );
+		t2.needsUpdate = true;
+
+		expect( t1.distanceToTriangle( t2 ) ).toEqual( 0 );
+
+	} );
+
+	it( 'should support edge case (2)', function () {
+
+		t1.a.set( 0, 0, 0 );
+		t1.b.set( 1, 0, 0 );
+		t1.c.set( 0, 1, 0 );
+		t1.needsUpdate = true;
+
+
+		t2.a.set( 0, 0.1, - 0.1 );
+		t2.b.set( 1, 0.1, - 0.1 );
+		t2.c.set( 0, 0.1, 0.9 );
+		t2.needsUpdate = true;
+
+		expect( t1.distanceToTriangle( t2 ) ).toEqual( 0 );
 
 	} );
 
