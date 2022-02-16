@@ -764,23 +764,7 @@ export class MeshBVH {
 
 				intersectsBounds: ( box, isLeaf, score ) => {
 
-					if ( score < closestDistance && score < maxThreshold ) {
-
-						// if we know the triangles of this bounds will be intersected next then
-						// save the bounds to use during triangle checks.
-						if ( isLeaf ) {
-
-							obb2.min.copy( box.min );
-							obb2.max.copy( box.max );
-							obb2.needsUpdate = true;
-
-						}
-
-						return true;
-
-					}
-
-					return false;
+					return score < closestDistance && score < maxThreshold;
 
 				},
 
