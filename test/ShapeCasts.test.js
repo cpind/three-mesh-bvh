@@ -765,19 +765,21 @@ function runSuiteWithOptions( defaultOptions ) {
 
 		} );
 
-		for ( let n of [ 4, 8, 16 ] ) {
-
-			it( `should handle case, n: ${n}`, () => {
+		function distanceBetweenSphereTestCase(n, boundsTreeYesNo = false) {
+			it( `should return distance between sphere, n: ${n}, boundsTree: ${boundsTreeYesNo ? 'yes' : 'no'}`, () => {
 
 				const geom = new SphereBufferGeometry( 1, n * 2, n );
 				const otherGeom = new SphereBufferGeometry( 1, n * 2, n );
 				geom.boundsTree = new MeshBVH( geom );
+				if (boundsTreeYesNo) {
+					otherGeom.boundsTree = new MeshBVH(otherGeom);
+				}
 				const matrix = new Matrix4()
-					.compose(
-						new Vector3( 3, 0, 0 ),
-						new Quaternion(),
-						new Vector3( 1, 1, 1 )
-					);
+							.compose(
+								new Vector3( 3, 0, 0 ),
+								new Quaternion(),
+								new Vector3( 1, 1, 1 )
+							);
 
 				const bvh1 = geom.boundsTree;
 
@@ -788,10 +790,18 @@ function runSuiteWithOptions( defaultOptions ) {
 				const point2 = target2.point.applyMatrix4( matrix );
 				const dist = point1.distanceTo( point2 );
 				expect( dist ).toBeCloseTo( 1, 1 );
-
+				expect( target1.distance ).toBeCloseTo(1);
 			} );
 
 		}
+
+		distanceBetweenSphereTestCase(4, false);
+		distanceBetweenSphereTestCase(8, false);
+		distanceBetweenSphereTestCase(16, false);
+
+		distanceBetweenSphereTestCase(4, true);
+		distanceBetweenSphereTestCase(8, true);
+		distanceBetweenSphereTestCase(16, true);
 
 	} );
 
