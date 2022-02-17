@@ -1,4 +1,5 @@
 import {
+	Matrix4,
 	Mesh,
 	BufferGeometry,
 	SphereBufferGeometry,
@@ -180,6 +181,18 @@ describe( 'Bounds Tree', () => {
 		expect( geom.index ).not.toBe( null );
 		expect( geom.index.count ).toBe( largePosAttr.count );
 		expect( geom.index.array.BYTES_PER_ELEMENT ).toBe( 4 );
+
+	} );
+
+	it( 'should get correct bounding box for geometry', () => {
+
+		const geom = new SphereBufferGeometry();
+		geom.applyMatrix4( new Matrix4().makeTranslation( 3, 0, 0 ) );
+		new MeshBVH( geom );
+		const box1 = geom.boundingBox;
+		geom.boundingBox = null;
+		geom.computeBoundingBox();
+		expect( box1.equals( geom.boundingBox ) ).toBe( true );
 
 	} );
 
