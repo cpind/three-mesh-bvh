@@ -779,7 +779,7 @@ function buildTree( geo, options ) {
 		// early out if we've met our capacity
 		if ( count <= maxLeafTris || depth >= maxDepth ) {
 
-			triggerProgress( offset );
+			triggerProgress( offset + count );
 			node.offset = offset;
 			node.count = count;
 			return node;
@@ -790,7 +790,7 @@ function buildTree( geo, options ) {
 		const split = getOptimalSplit( node.boundingData, centroidBoundingData, triangleBounds, offset, count, strategy );
 		if ( split.axis === - 1 ) {
 
-			triggerProgress( offset );
+			triggerProgress( offset + count );
 			node.offset = offset;
 			node.count = count;
 			return node;
@@ -802,7 +802,7 @@ function buildTree( geo, options ) {
 		// create the two new child nodes
 		if ( splitOffset === offset || splitOffset === offset + count ) {
 
-			triggerProgress( offset );
+			triggerProgress( offset + count );
 			node.offset = offset;
 			node.count = count;
 
@@ -841,7 +841,10 @@ function buildTree( geo, options ) {
 	// Compute the full bounds of the geometry at the same time as triangle bounds because
 	// we'll need it for the root bounds in the case with no groups and it should be fast here.
 	// We can't use the geometrying bounding box if it's available because it may be out of date.
-	const fullBounds = new Float32Array( 6 );
+	const fullBounds = Float32Array.from( [
+		+ Infinity, + Infinity, + Infinity,
+		- Infinity, - Infinity, - Infinity
+	] );
 	const cacheCentroidBoundingData = new Float32Array( 6 );
 	const triangleBounds = computeTriangleBounds( geo, fullBounds );
 	const indexArray = geo.index.array;
@@ -1115,7 +1118,7 @@ const closestPointLineToLine = ( function () {
 		const v32 = dir2;
 
 		v02.subVectors( v0, v2 );
-		dir1.subVectors( l1.end, l2.start );
+		dir1.subVectors( l1.end, l1.start );
 		dir2.subVectors( l2.end, l2.start );
 
 		// float d0232 = v02.Dot(v32);
@@ -1440,7 +1443,7 @@ SeparatingAxisTriangle.prototype.intersectsTriangle = ( function () {
 
 	// TODO: If the triangles are coplanar and intersecting the target is nonsensical. It should at least
 	// be a line contained by both triangles if not a different special case somehow represented in the return result.
-	return function intersectsTriangle( other, target = null ) {
+	return function intersectsTriangle( other, target = null, info = {} ) {
 
 		if ( this.needsUpdate ) {
 
@@ -1512,7 +1515,9 @@ SeparatingAxisTriangle.prototype.intersectsTriangle = ( function () {
 			if ( Math.abs( plane1.normal.dot( plane2.normal ) ) > 1.0 - 1e-10 ) {
 
 				// TODO find two points that intersect on the edges and make that the result
-				console.warn( 'SeparatingAxisTriangle.intersectsTriangle: Triangles are coplanar which does not support an output edge. Setting edge to 0, 0, 0.' );
+				// console.warn( 'SeparatingAxisTriangle.intersectsTriangle: Triangles are coplanar which does not support an output edge. Setting edge to 0, 0, 0.' );
+				info.isValid = false;
+				info.description = 'SeparatingAxisTriangle.intersectsTriangle: Triangles are coplanar which does not support an output edge. Setting edge to 0, 0, 0.';
 				target.start.set( 0, 0, 0 );
 				target.end.set( 0, 0, 0 );
 
@@ -1528,6 +1533,13 @@ SeparatingAxisTriangle.prototype.intersectsTriangle = ( function () {
 
 					edge.start.copy( p1 );
 					edge.end.copy( p2 );
+
+					// skip if edge coplanar with point
+					if ( plane2.normal.dot( edge.delta( new Vector3() ) ) === 0 ) {
+
+						continue;
+
+					}
 
 					if ( plane2.intersectLine( edge, found1 ? edge1.start : edge1.end ) ) {
 
@@ -1554,6 +1566,13 @@ SeparatingAxisTriangle.prototype.intersectsTriangle = ( function () {
 					edge.start.copy( p1 );
 					edge.end.copy( p2 );
 
+					// skip if edge coplanar with point
+					if ( plane1.normal.dot( edge.delta( new Vector3() ) ) === 0 ) {
+
+						continue;
+
+					}
+
 					if ( plane1.intersectLine( edge, found2 ? edge2.start : edge2.end ) ) {
 
 						if ( found2 ) {
@@ -1572,34 +1591,47 @@ SeparatingAxisTriangle.prototype.intersectsTriangle = ( function () {
 				edge1.delta( dir1 );
 				edge2.delta( dir2 );
 
-
-				if ( dir1.dot( dir2 ) < 0 ) {
-
-					let tmp = edge2.start;
-					edge2.start = edge2.end;
-					edge2.end = tmp;
-
-				}
-
-				tempDir.subVectors( edge1.start, edge2.start );
-				if ( tempDir.dot( dir1 ) > 0 ) {
+				if ( dir1.equals( new Vector3() ) ) {
 
 					target.start.copy( edge1.start );
+					target.end.copy( edge1.start );
 
-				} else {
+				} else if ( dir2.equals( new Vector3() ) ) {
 
 					target.start.copy( edge2.start );
-
-				}
-
-				tempDir.subVectors( edge1.end, edge2.end );
-				if ( tempDir.dot( dir1 ) < 0 ) {
-
-					target.end.copy( edge1.end );
+					target.end.copy( edge2.start );
 
 				} else {
 
-					target.end.copy( edge2.end );
+					if ( dir1.dot( dir2 ) < 0 ) {
+
+						let tmp = edge2.start;
+						edge2.start = edge2.end;
+						edge2.end = tmp;
+
+					}
+
+					tempDir.subVectors( edge1.start, edge2.start );
+					if ( tempDir.dot( dir1 ) > 0 ) {
+
+						target.start.copy( edge1.start );
+
+					} else {
+
+						target.start.copy( edge2.start );
+
+					}
+
+					tempDir.subVectors( edge1.end, edge2.end );
+					if ( tempDir.dot( dir1 ) < 0 ) {
+
+						target.end.copy( edge1.end );
+
+					} else {
+
+						target.end.copy( edge2.end );
+
+					}
 
 				}
 
@@ -1739,7 +1771,7 @@ class OrientedBox extends Box3 {
 	set( min, max, matrix ) {
 
 		super.set( min, max );
-		this.matrix = matrix;
+		this.matrix.copy( matrix );
 		this.needsUpdate = true;
 
 	}
@@ -1990,6 +2022,15 @@ OrientedBox.prototype.distanceToBox = ( function () {
 
 				box.getCenter( point2 );
 				this.closestPointToPoint( point2, point1 );
+
+				// box could be regular Box3
+				// TODO: needs testing
+				if ( ! box.isOrientedBox ) {
+
+					box = new OrientedBox( box.min, box.max );
+
+				}
+
 				box.closestPointToPoint( point1, point2 );
 
 				if ( target1 ) target1.copy( point1 );
@@ -3737,39 +3778,22 @@ class MeshBVH {
 		let closestDistanceTriIndex = null;
 		let closestDistanceOtherTriIndex = null;
 		tempMatrix.copy( geometryToBvh ).invert();
-		obb2.matrix.copy( tempMatrix );
 		this.shapecast(
 			{
 
 				boundsTraverseOrder: box => {
 
-					return obb.distanceToBox( box, Math.min( closestDistance, maxThreshold ) );
+					return obb.distanceToBox( box );
 
 				},
 
 				intersectsBounds: ( box, isLeaf, score ) => {
 
-					if ( score < closestDistance && score < maxThreshold ) {
-
-						// if we know the triangles of this bounds will be intersected next then
-						// save the bounds to use during triangle checks.
-						if ( isLeaf ) {
-
-							obb2.min.copy( box.min );
-							obb2.max.copy( box.max );
-							obb2.needsUpdate = true;
-
-						}
-
-						return true;
-
-					}
-
-					return false;
+					return score < closestDistance && score < maxThreshold;
 
 				},
 
-				intersectsRange: ( offset, count ) => {
+				intersectsRange: ( offset, count, contained_, depth_, nodeIndex_, bvhBox ) => {
 
 					if ( otherGeometry.boundsTree ) {
 
@@ -3778,7 +3802,8 @@ class MeshBVH {
 						return otherGeometry.boundsTree.shapecast( {
 							boundsTraverseOrder: box => {
 
-								return obb2.distanceToBox( box, Math.min( closestDistance, maxThreshold ) );
+								obb2.set( box.min, box.max, geometryToBvh );
+								return obb2.distanceToBox( bvhBox );
 
 							},
 
@@ -5506,5 +5531,5 @@ bool bvhIntersectFirstHit(
 
 `;
 
-export { AVERAGE, CENTER, CONTAINED, FloatVertexAttributeTexture, INTERSECTED, IntVertexAttributeTexture, MeshBVH, MeshBVHUniformStruct, MeshBVHVisualizer, NOT_INTERSECTED, SAH, UIntVertexAttributeTexture, VertexAttributeTexture, acceleratedRaycast, computeBoundsTree, disposeBoundsTree, estimateMemoryInBytes, getBVHExtremes, getJSONStructure, getTriangleHitPointInfo, shaderIntersectFunction, shaderStructs, validateBounds };
+export { AVERAGE, CENTER, CONTAINED, FloatVertexAttributeTexture, INTERSECTED, IntVertexAttributeTexture, MeshBVH, MeshBVHUniformStruct, MeshBVHVisualizer, NOT_INTERSECTED, SAH, SeparatingAxisTriangle, UIntVertexAttributeTexture, VertexAttributeTexture, acceleratedRaycast, closestPointsSegmentToSegment, computeBoundsTree, disposeBoundsTree, estimateMemoryInBytes, getBVHExtremes, getJSONStructure, getTriangleHitPointInfo, setTriangle, shaderIntersectFunction, shaderStructs, validateBounds };
 //# sourceMappingURL=index.module.js.map
